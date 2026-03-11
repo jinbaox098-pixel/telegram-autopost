@@ -26,7 +26,7 @@ BUTTON_TEXT  = "点击观看更加精彩"
 BUTTON_URL   = "https://d1gxij0kbua97p.cloudfront.net/?parent_icode=1411059883"
 
 # ── Post times (24h format) ────────────────────────────────────────────────────
-POST_TIMES = ["11:55", "14:00", "17:30", "20:00", "22:30"]
+POST_TIMES = ["11:55", "14:00", "15:40", "20:00", "22:30"]
 
 
 def download_from_gdrive(file_id: str) -> bytes:
