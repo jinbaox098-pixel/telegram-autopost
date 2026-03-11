@@ -28,7 +28,7 @@ BUTTON_URL  = "https://d1gxij0kbua97p.cloudfront.net/?parent_icode=1411059883"
 GMT7 = timezone(timedelta(hours=7))
 
 # ── Post times in YOUR local time GMT+7 (HH:MM) ───────────────────────────────
-POST_TIMES = ["11:55", "14:00", "16:15", "20:00", "22:30"]
+POST_TIMES = ["11:55", "14:00", "15:50", "20:00", "22:30"]
 
 
 def download_from_gdrive(file_id: str) -> bytes:
@@ -51,7 +51,7 @@ def download_from_gdrive(file_id: str) -> bytes:
     return content
 
 
-def send_video(video_bytes: bytes) -> bool:
+def send_video(video_bytes: bytes, channel: str) -> bool:
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendVideo"
 
     reply_markup = json.dumps({
@@ -62,7 +62,7 @@ def send_video(video_bytes: bytes) -> bool:
 
     files = {"video": ("video.mp4", video_bytes, "video/mp4")}
     data  = {
-        "chat_id": CHANNEL_ID,
+        "chat_id": channel,
         "reply_markup": reply_markup,
         "supports_streaming": "true",
         "width": 1080,
@@ -85,9 +85,25 @@ def job():
     try:
         log.info("Downloading video from Google Drive...")
         video_bytes = download_from_gdrive(GDRIVE_ID)
-        send_video(video_bytes)
+        for channel in CHANNEL_ID:
+            log.info(f"Posting to {channel}...")
+            send_video(video_bytes, channel)
     except Exception as e:
         log.error(f"Error: {e}")
+
+
+LAST_POST_FILE = "/tmp/last_post.txt"
+
+def get_last_posted() -> str:
+    try:
+        with open(LAST_POST_FILE) as f:
+            return f.read().strip()
+    except:
+        return ""
+
+def save_last_posted(val: str):
+    with open(LAST_POST_FILE, "w") as f:
+        f.write(val)
 
 
 def main():
@@ -96,12 +112,15 @@ def main():
         log.info(f"  ⏰ Scheduled at {t} GMT+7")
     log.info("✅ Bot is running 24/7. Waiting for scheduled times...")
 
-    last_posted = ""
     while True:
         now = datetime.now(GMT7).strftime("%H:%M")
-        if now in POST_TIMES and now != last_posted:
+        today = datetime.now(GMT7).strftime("%Y-%m-%d")
+        last_posted = get_last_posted()
+        key = f"{today}_{now}"
+
+        if now in POST_TIMES and last_posted != key:
+            save_last_posted(key)
             job()
-            last_posted = now
             time.sleep(61)
         time.sleep(20)
 
