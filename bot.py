@@ -28,7 +28,7 @@ BUTTON_URL  = "https://d1gxij0kbua97p.cloudfront.net/?parent_icode=1411059883"
 GMT7 = timezone(timedelta(hours=7))
 
 # ── Post times in YOUR local time GMT+7 (HH:MM) ───────────────────────────────
-POST_TIMES = ["11:55", "14:00", "16:47", "20:00", "22:30"]
+POST_TIMES = ["11:55", "14:00", "16:50", "20:00", "22:30"]
 
 # ── Track last post to prevent duplicates ─────────────────────────────────────
 last_post_key = ""
