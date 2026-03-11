@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 BOT_TOKEN   = "8540608510:AAG_Y33NDGpj8WbPeuEOzOGlOpyXSHliB8g"
-CHANNEL_ID  = ["@yanxuuu0", "@mrm18jingnu"]
+CHANNELS    = ["@yanxuuu0", "@mrm18jingnu"]
 GDRIVE_ID   = "1mpwCJ0YhzEx_fDTY6jiZI8FhYcH8sQes"
 BUTTON_TEXT = "点击观看更加精彩"
 BUTTON_URL  = "https://d1gxij0kbua97p.cloudfront.net/?parent_icode=1411059883"
@@ -28,7 +28,10 @@ BUTTON_URL  = "https://d1gxij0kbua97p.cloudfront.net/?parent_icode=1411059883"
 GMT7 = timezone(timedelta(hours=7))
 
 # ── Post times in YOUR local time GMT+7 (HH:MM) ───────────────────────────────
-POST_TIMES = ["11:55", "14:00", "16:27", "20:00", "22:30"]
+POST_TIMES = ["11:55", "14:00", "15:50", "20:00", "22:30"]
+
+# ── Track last post to prevent duplicates ─────────────────────────────────────
+last_post_key = ""
 
 
 def download_from_gdrive(file_id: str) -> bytes:
@@ -72,38 +75,33 @@ def send_video(video_bytes: bytes, channel: str) -> bool:
     response = requests.post(url, data=data, files=files, timeout=120)
 
     if response.status_code == 200:
-        log.info("✅ Video posted successfully!")
+        log.info(f"✅ Posted to {channel}!")
         return True
     else:
-        log.error(f"❌ Failed: {response.text}")
+        log.error(f"❌ Failed {channel}: {response.text}")
         return False
 
 
-def job():
+def job(post_key: str):
+    global last_post_key
+
+    # Double-check to prevent duplicate posts
+    if last_post_key == post_key:
+        log.info(f"⏭ Already posted for {post_key}, skipping.")
+        return
+
+    last_post_key = post_key
     now = datetime.now(GMT7).strftime("%H:%M")
     log.info(f"── Running post job at {now} GMT+7 ──")
+
     try:
         log.info("Downloading video from Google Drive...")
         video_bytes = download_from_gdrive(GDRIVE_ID)
-        for channel in CHANNEL_ID:
-            log.info(f"Posting to {channel}...")
+        for channel in CHANNELS:
             send_video(video_bytes, channel)
+            time.sleep(2)  # Small delay between channels
     except Exception as e:
         log.error(f"Error: {e}")
-
-
-LAST_POST_FILE = "/tmp/last_post.txt"
-
-def get_last_posted() -> str:
-    try:
-        with open(LAST_POST_FILE) as f:
-            return f.read().strip()
-    except:
-        return ""
-
-def save_last_posted(val: str):
-    with open(LAST_POST_FILE, "w") as f:
-        f.write(val)
 
 
 def main():
@@ -113,15 +111,14 @@ def main():
     log.info("✅ Bot is running 24/7. Waiting for scheduled times...")
 
     while True:
-        now = datetime.now(GMT7).strftime("%H:%M")
-        today = datetime.now(GMT7).strftime("%Y-%m-%d")
-        last_posted = get_last_posted()
-        key = f"{today}_{now}"
+        now  = datetime.now(GMT7).strftime("%H:%M")
+        date = datetime.now(GMT7).strftime("%Y-%m-%d")
+        key  = f"{date}_{now}"
 
-        if now in POST_TIMES and last_posted != key:
-            save_last_posted(key)
-            job()
-            time.sleep(61)
+        if now in POST_TIMES:
+            job(key)
+            time.sleep(61)  # Sleep 61 seconds after posting window
+
         time.sleep(20)
 
 
