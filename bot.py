@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
 Telegram Auto-Post Bot — Railway Edition
-Downloads video from Google Drive and posts to Telegram on schedule.
+Runs 24/7 and posts at scheduled times every day (GMT+7 timezone).
 """
 
 import json
 import logging
 import requests
-import schedule
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -19,23 +18,24 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ── Config ─────────────────────────────────────────────────────────────────────
-BOT_TOKEN    = "8540608510:AAG_Y33NDGpj8WbPeuEOzOGlOpyXSHliB8g"
-CHANNEL_ID   = "@yanxuuu0"
-GDRIVE_ID    = "1mpwCJ0YhzEx_fDTY6jiZI8FhYcH8sQes"
-BUTTON_TEXT  = "点击观看更加精彩"
-BUTTON_URL   = "https://d1gxij0kbua97p.cloudfront.net/?parent_icode=1411059883"
+BOT_TOKEN   = "8540608510:AAG_Y33NDGpj8WbPeuEOzOGlOpyXSHliB8g"
+CHANNEL_ID  = "@yanxuuu0"
+GDRIVE_ID   = "1mpwCJ0YhzEx_fDTY6jiZI8FhYcH8sQes"
+BUTTON_TEXT = "点击观看更加精彩"
+BUTTON_URL  = "https://d1gxij0kbua97p.cloudfront.net/?parent_icode=1411059883"
 
-# ── Post times (24h format) ────────────────────────────────────────────────────
-POST_TIMES = ["11:55", "14:00", "16:00", "20:00", "22:30"]
+# ── Timezone GMT+7 ─────────────────────────────────────────────────────────────
+GMT7 = timezone(timedelta(hours=7))
+
+# ── Post times in YOUR local time GMT+7 (HH:MM) ───────────────────────────────
+POST_TIMES = ["11:55", "14:00", "15:50", "20:00", "22:30"]
 
 
 def download_from_gdrive(file_id: str) -> bytes:
-    """Download a file from Google Drive by file ID."""
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
     session = requests.Session()
     response = session.get(url, stream=True)
 
-    # Handle Google's virus scan warning for large files
     for key, value in response.cookies.items():
         if key.startswith("download_warning"):
             url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm={value}"
@@ -52,7 +52,6 @@ def download_from_gdrive(file_id: str) -> bytes:
 
 
 def send_video(video_bytes: bytes) -> bool:
-    """Send video to Telegram channel with inline button."""
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendVideo"
 
     reply_markup = json.dumps({
@@ -79,7 +78,8 @@ def send_video(video_bytes: bytes) -> bool:
 
 
 def job():
-    log.info(f"── Running post job at {datetime.now().strftime('%H:%M')} ──")
+    now = datetime.now(GMT7).strftime("%H:%M")
+    log.info(f"── Running post job at {now} GMT+7 ──")
     try:
         log.info("Downloading video from Google Drive...")
         video_bytes = download_from_gdrive(GDRIVE_ID)
@@ -89,17 +89,19 @@ def job():
 
 
 def main():
-    log.info("🚀 Bot started! Scheduling posts...")
-
+    log.info("🚀 Bot started!")
     for t in POST_TIMES:
-        schedule.every().day.at(t).do(job)
-        log.info(f"  ⏰ Scheduled at {t}")
-
+        log.info(f"  ⏰ Scheduled at {t} GMT+7")
     log.info("✅ Bot is running 24/7. Waiting for scheduled times...")
 
+    last_posted = ""
     while True:
-        schedule.run_pending()
-        time.sleep(30)
+        now = datetime.now(GMT7).strftime("%H:%M")
+        if now in POST_TIMES and now != last_posted:
+            job()
+            last_posted = now
+            time.sleep(61)
+        time.sleep(20)
 
 
 if __name__ == "__main__":
