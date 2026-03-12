@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 BOT_TOKEN   = "8540608510:AAG_Y33NDGpj8WbPeuEOzOGlOpyXSHliB8g"
-CHANNELS    = ["@mrm18jingnu", "@avjapan24", "@Zmy12430"]
+CHANNELS    = ["@mrm18jingnu", "@Zmy12430"]
 GDRIVE_ID   = "1mpwCJ0YhzEx_fDTY6jiZI8FhYcH8sQes"
 BUTTON_TEXT = "点击观看更加精彩"
 BUTTON_URL  = "https://d1gxij0kbua97p.cloudfront.net/?parent_icode=1411059883"
@@ -28,7 +28,7 @@ BUTTON_URL  = "https://d1gxij0kbua97p.cloudfront.net/?parent_icode=1411059883"
 GMT7 = timezone(timedelta(hours=7))
 
 # ── Post times in YOUR local time GMT+7 (HH:MM) ───────────────────────────────
-POST_TIMES = ["09:30", "13:38"]
+POST_TIMES = ["09:30", "13:45"]
 
 # ── Track last post to prevent duplicates ─────────────────────────────────────
 last_post_key = ""
